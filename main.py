@@ -7,8 +7,10 @@ import time
 import os
 import base64
 import requests
+import matplotlib.pyplot as plt
 from requests import post,get
-from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
+from wordcloud import WordCloud
 import json
 load_dotenv()
 
@@ -145,6 +147,18 @@ for idx, song in enumerate(songs):
     print(f"{idx+1}. {song['name']}")
 
 
+def fetch_lyrics(song_title, artist_name):
+    search_url = f"https://www.azlyrics.com/lyrics/{artist_name.replace(' ', '').lower()}/{song_title.replace(' ', '').lower()}.html"
+    response = requests.get(search_url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        lyrics_div = soup.find_all("div", attrs={"class": None, "id": None})
+        if lyrics_div:
+            lyrics = lyrics_div[0].get_text()
+            return lyrics
+    return None
+
+lyrics_data = ""
 # Function to fetch audio features for tracks
 def get_audio_features(token, track_ids):
     url = f"https://api.spotify.com/v1/audio-features"
@@ -170,13 +184,24 @@ for track, features in zip(songs, audio_features):
     }
     track_info.update(features)
     track_data.append(track_info)
+    # Fetch lyrics
+    # lyrics = fetch_lyrics(track_info['name'], track_info['artists'])
+    # print(lyrics)
+    # if lyrics:
+    #     lyrics_data += lyrics + "\n\n"
 
 df = pd.DataFrame(track_data)
 print(df.head())
 
-df.to_csv('myTracksforAnalysisJuly9.csv', index=False)
+df.to_csv('myTracksforAnalysisJuly31.csv', index=False)
 
+# wordcloud = WordCloud(width=800, height=400, background_color='white').generate(lyrics_data)
 
+# plt.figure(figsize=(10, 5))
+# plt.imshow(wordcloud, interpolation='bilinear')
+# plt.axis('off')
+# plt.title("Word Cloud of Song Lyrics")
+# plt.show()
 # Stop the Flask server
 # Call the function to stop the server
 stop_flask_server()
